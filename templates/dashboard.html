@@ -49,6 +49,16 @@
     .stat-card.blue   .value { color: #60a5fa; }
     .stat-card.red    .value { color: #f87171; }
     .stat-card.purple .value { color: #a78bfa; }
+    .stat-card.green  .value { color: #34d399; }
+
+    /* ── Live indicator ─��� */
+    .live-dot {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: #34d399; margin-right: 6px;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    .live-dot.offline { background: #475569; animation: none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
     /* ── Tabs ── */
     .nav-tabs { border-bottom: 1px solid #2d3148; margin-bottom: 20px; }
@@ -56,7 +66,7 @@
     .nav-tabs .nav-link:hover { color: #818cf8; }
     .nav-tabs .nav-link.active { color: #818cf8; border-bottom: 2px solid #818cf8; background: none; }
 
-    /* ── Filters ── */
+    /* ── Filters ─�� */
     .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: flex-end; }
     .filter-row .form-control,
     .filter-row .form-select {
@@ -94,6 +104,35 @@
       background: #1e1b4b; color: #a78bfa;
     }
 
+    /* ── Live feed cards ── */
+    .live-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 14px; }
+    .live-card {
+      background: #1a1d27; border: 1px solid #2d3148; border-radius: 12px;
+      overflow: hidden; transition: border-color .2s;
+    }
+    .live-card:hover { border-color: #818cf8; }
+    .live-card img { width: 100%; height: 150px; object-fit: cover; display: block; cursor: pointer; }
+    .live-card .card-body { padding: 10px 12px; }
+    .live-route {
+      font-size: 11px; font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; display: inline-block; margin-bottom: 6px;
+    }
+    .live-meta { font-size: 12px; color: #64748b; line-height: 1.6; }
+    .live-reason { font-size: 11.5px; color: #f87171; margin-top: 4px; font-style: italic; }
+
+    .live-counters {
+      display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 18px;
+    }
+    .live-counter {
+      background: #1e2235; border: 1px solid #2d3148; border-radius: 8px;
+      padding: 8px 16px; font-size: 13px; color: #94a3b8;
+    }
+    .live-counter .cnt-val { font-weight: 700; margin-left: 4px; }
+    .cnt-accepted { color: #34d399; }
+    .cnt-rejected { color: #f87171; }
+    .cnt-vlm      { color: #a78bfa; }
+    .cnt-cached   { color: #60a5fa; }
+
     /* ── Modal ── */
     .modal-content { background: #1a1d27; border: 1px solid #2d3148; color: #e2e8f0; }
     .modal-header  { border-bottom: 1px solid #2d3148; }
@@ -115,44 +154,49 @@
 <div class="sidebar">
   <div class="logo">🛣️ Road Defect<br><span>Dashboard</span></div>
   <nav>
-    <a href="/">📊 Overview</a>
-    <a href="/dashboard" class="active">🗃️ Dashboard</a>
-    <a href="/live">📡 Live Feed</a>
-    <a href="/accepted">✅ Accepted</a>
-    <a href="/rejected">❌ Rejected</a>
-    <a href="/reasoning">🧠 Reasoning</a>
-    <a href="/visualizations">📈 Visualizations</a>
-    <a href="/tracking">🎯 Tracking</a>
+    <a href="/dashboard" class="active">🗃��� Dashboard</a>
   </nav>
   <div class="version">YOLO + VLM + ngrok</div>
 </div>
 
 <!-- ── Main ── -->
 <div class="main">
-  <div class="page-title">Database Dashboard</div>
-  <div class="page-sub">YOLO detections and VLM rejections stored in SQLite</div>
+  <div class="d-flex align-items-center gap-3 mb-1">
+    <div class="page-title" style="margin-bottom:0">Database Dashboard</div>
+    <span id="live-indicator" style="font-size:12px;color:#64748b">
+      <span class="live-dot offline"></span> <span id="live-label">connecting...</span>
+    </span>
+  </div>
+  <div class="page-sub">YOLO detections, VLM rejections, and live pipeline stream</div>
 
   <!-- Stats row -->
   <div class="row g-3 mb-4">
-    <div class="col-md-4">
+    <div class="col-md-3">
       <div class="stat-card blue">
-        <div class="label">Total YOLO Detections</div>
+        <div class="label">YOLO Detections</div>
         <div class="value" id="stat-detections">—</div>
         <div class="sub">stored in database</div>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <div class="stat-card red">
-        <div class="label">Total VLM Rejections</div>
+        <div class="label">VLM Rejections</div>
         <div class="value" id="stat-vlm-no">—</div>
         <div class="sub">VLM said NO</div>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <div class="stat-card purple">
         <div class="label">Models Used</div>
-        <div class="value" id="stat-models">—</div>
+        <div class="value" id="stat-models">���</div>
         <div class="sub" id="stat-models-list" style="word-break:break-all"></div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card green">
+        <div class="label">Live Received</div>
+        <div class="value" id="stat-live-total">0</div>
+        <div class="sub" id="stat-live-sub">via pipeline stream</div>
       </div>
     </div>
   </div>
@@ -167,6 +211,11 @@
     <li class="nav-item">
       <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vlm-no">
         VLM Rejections
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-live">
+        📡 Live Feed
       </button>
     </li>
   </ul>
@@ -216,7 +265,7 @@
       </div>
     </div>
 
-    <!-- ── VLM Rejections tab ── -->
+    <!-- ��─ VLM Rejections tab ─�� -->
     <div class="tab-pane fade" id="tab-vlm-no">
       <div class="filter-row">
         <div>
@@ -256,6 +305,26 @@
             <tr class="empty-row"><td colspan="6">Loading...</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- ─�� Live Feed tab ── -->
+    <div class="tab-pane fade" id="tab-live">
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <span style="font-size:13px;color:#64748b" id="live-status">Waiting for data...</span>
+        <span style="margin-left:auto;color:#475569;font-size:12px" id="last-update"></span>
+      </div>
+
+      <div class="live-counters">
+        <div class="live-counter">Accepted <span class="cnt-val cnt-accepted" id="cnt-accepted">0</span></div>
+        <div class="live-counter">Rejected <span class="cnt-val cnt-rejected" id="cnt-rejected">0</span></div>
+        <div class="live-counter">VLM Calls <span class="cnt-val cnt-vlm" id="cnt-vlm">0</span></div>
+        <div class="live-counter">Cached <span class="cnt-val cnt-cached" id="cnt-cached">0</span></div>
+      </div>
+
+      <div class="live-grid" id="live-grid"></div>
+      <div id="live-empty" style="color:#475569;font-size:14px;text-align:center;padding:40px">
+        Waiting for detections from Colab pipeline...
       </div>
     </div>
 

@@ -19,7 +19,7 @@ HOW TO RUN
 
 import os
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, redirect
 
 from database import init_db
 from routes.ingest import ingest_bp
@@ -34,6 +34,11 @@ app = Flask(__name__)
 app.register_blueprint(ingest_bp)
 app.register_blueprint(api_bp)
 app.register_blueprint(legacy_bp)
+
+
+@app.route("/")
+def index():
+    return redirect("/dashboard")
 
 
 if __name__ == "__main__":
