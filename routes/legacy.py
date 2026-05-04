@@ -8,13 +8,16 @@ routes/legacy.py — Legacy Colab pipeline compatibility routes.
   GET  /live  (redirects to /dashboard)
 """
 
-import os, base64, time
+import os, base64, time, json
 from collections import deque
 from threading import Lock
 
 from flask import (Blueprint, send_file, jsonify, abort,
                    request, Response, redirect)
 from dotenv import load_dotenv
+
+from database import insert_live_history, insert_detection, insert_vlm_yes, insert_vlm_no
+from utils import save_image
 
 load_dotenv()
 
@@ -48,16 +51,70 @@ def ingest():
     if not data:
         return jsonify({"status": "error", "msg": "no JSON"}), 400
 
-    route = data.get("route", "")
+    route = data.get("route", "UNKNOWN")
 
     with live_lock:
         data["received_at"] = time.time()
         live_feed.appendleft(data)
 
+        # Persistence: Save image to disk and record in DB
+        image_path = save_image(data.get("frame_b64"), "live_history", route)
+        
+        # Prepare metadata (excluding binary frame)
+        meta = {k: v for k, v in data.items() if k != "frame_b64"}
+        
+        insert_live_history(
+            route=route,
+            label=data.get("label"),
+            confidence=data.get("confidence"),
+            track_id=data.get("track_id"),
+            image_path=image_path,
+            reasoning=data.get("reasoning") or data.get("reason"),
+            meta_json=json.dumps(meta)
+        )
+
+        # Specialty tables mapping
+        label       = data.get("label") or "unknown"
+        confidence  = data.get("confidence") or 0.0
+        model_name  = data.get("model_name") or data.get("model") or "yolov11n"
+        vlm_model   = "Qwen/Qwen3.5-2B"
+        reasoning   = data.get("reasoning") or data.get("reason")
+        track_id    = data.get("track_id")
+
+        # 1. Main detections table (ONLY if AUTO-ACCEPT / confidence >= 0.80)
+        if route == "AUTO-ACCEPT" or confidence >= 0.80:
+            insert_detection(
+                defect_type=label,
+                confidence=confidence,
+                model_name=model_name,
+                image_path=image_path,
+                track_id=track_id,
+                status='accepted'
+            )
+
+        # 2. VLM specific tables (0.30 - 0.80 range)
+        # Store ONLY in vlm_detections or vlm_no_results, not in detections table.
+        elif route == "VLM-YES":
+            insert_vlm_yes(
+                defect_type=label,
+                image_path=image_path,
+                model=vlm_model,
+                reasoning=reasoning,
+                track_id=track_id
+            )
+        elif route == "VLM-NO":
+            insert_vlm_no(
+                defect_type=label,
+                image_path=image_path,
+                model=vlm_model,
+                reasoning=reasoning,
+                track_id=track_id
+            )
+
         live_counters["total"] += 1
-        if "ACCEPT" in route:
+        if "ACCEPT" in route or "VLM-YES" in route:
             live_counters["accepted"] += 1
-        if "REJECT" in route or "NO" in route:
+        if "REJECT" in route or "VLM-NO" in route or "NO" in route:
             live_counters["rejected"] += 1
         if route in ("VLM-YES", "VLM-NO"):
             live_counters["vlm_called"] += 1

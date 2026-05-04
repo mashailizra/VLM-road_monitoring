@@ -1,0 +1,18 @@
+<div class="tab-pane fade show active" id="tab-live">
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <span style="font-size:13px;color:#64748b" id="live-status">Waiting for data...</span>
+    <span style="margin-left:auto;color:#475569;font-size:12px" id="last-update"></span>
+  </div>
+
+  <div class="live-counters">
+    <div class="live-counter">Accepted <span class="cnt-val cnt-accepted" id="cnt-accepted">0</span></div>
+    <div class="live-counter">Rejected <span class="cnt-val cnt-rejected" id="cnt-rejected">0</span></div>
+    <div class="live-counter">VLM Calls <span class="cnt-val cnt-vlm" id="cnt-vlm">0</span></div>
+    <div class="live-counter">Cached <span class="cnt-val cnt-cached" id="cnt-cached">0</span></div>
+  </div>
+
+  <div class="live-grid" id="live-grid"></div>
+  <div id="live-empty" style="color:#475569;font-size:14px;text-align:center;padding:40px">
+    Waiting for detections from Colab pipeline...
+  </div>
+</div>

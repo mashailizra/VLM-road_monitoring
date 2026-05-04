@@ -11,11 +11,11 @@ import os
 
 from flask import Blueprint, request, jsonify, send_from_directory, abort, render_template
 
-from database import query_detections, query_vlm_no, get_stats_from_db
+from database import query_detections, query_vlm_yes, query_vlm_no, query_live_history, get_stats_from_db
 
 api_bp = Blueprint("api", __name__)
 
-IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "images")
+IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
 
 
 @api_bp.route("/dashboard")
@@ -27,6 +27,19 @@ def dashboard():
 def get_detections():
     rows = query_detections(
         defect_type=request.args.get("defect_type"),
+        status=request.args.get("status"),
+        start=request.args.get("start"),
+        end=request.args.get("end"),
+        limit=request.args.get("limit", 200),
+    )
+    return jsonify(rows)
+
+
+@api_bp.route("/api/vlm-yes")
+def get_vlm_yes():
+    rows = query_vlm_yes(
+        defect_type=request.args.get("defect_type"),
+        model=request.args.get("model"),
         start=request.args.get("start"),
         end=request.args.get("end"),
         limit=request.args.get("limit", 200),
@@ -42,6 +55,13 @@ def get_vlm_no():
         end=request.args.get("end"),
         limit=request.args.get("limit", 200),
     )
+    return jsonify(rows)
+
+
+@api_bp.route("/api/live-history")
+def get_live_history():
+    limit = request.args.get("limit", 100)
+    rows = query_live_history(limit=limit)
     return jsonify(rows)
 
 

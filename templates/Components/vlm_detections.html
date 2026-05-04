@@ -1,0 +1,80 @@
+<div class="tab-pane fade" id="tab-vlm-no">
+  <div class="filter-row">
+    <div>
+      <label>Defect Type</label>
+      <input type="text" class="form-control" id="f-vlm-defect-type" placeholder="e.g. pothole" style="width:150px">
+    </div>
+    <div>
+      <label>Model</label>
+      <input type="text" class="form-control" id="f-vlm-model-name" placeholder="e.g. yolov8n" style="width:140px">
+    </div>
+    <div>
+      <label>From</label>
+      <input type="datetime-local" class="form-control" id="f-vlm-start" style="width:180px">
+    </div>
+    <div>
+      <label>To</label>
+      <input type="datetime-local" class="form-control" id="f-vlm-end" style="width:180px">
+    </div>
+    <div style="padding-top:18px">
+      <button class="btn-filter" onclick="loadAllVlmDetections()">Filter</button>
+    </div>
+  </div>
+
+  <!-- Sub-tabs for Accepted/Rejected -->
+  <ul class="nav nav-tabs" id="vlmSubTabs" style="margin-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#vlm-accepted" onclick="loadVlmYes()">
+        ✅ Accepted
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#vlm-rejected" onclick="loadVlmNo()">
+        ❌ Rejected
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- Accepted Tab (VLM Yes) -->
+    <div class="tab-pane fade show active" id="vlm-accepted">
+      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; overflow-x:auto; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+        <table class="det-table">
+          <thead>
+            <tr>
+              <th>Track ID</th>
+              <th>Type</th>
+              <th>Model</th>
+              <th>Timestamp</th>
+              <th>Image</th>
+            </tr>
+          </thead>
+          <tbody id="vlm-yes-tbody">
+            <tr class="empty-row"><td colspan="5">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Rejected Tab (VLM No) -->
+    <div class="tab-pane fade" id="vlm-rejected">
+      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; overflow-x:auto; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+        <table class="det-table">
+          <thead>
+            <tr>
+              <th>Track ID</th>
+              <th>Type</th>
+              <th>Model</th>
+              <th>Reasoning</th>
+              <th>Timestamp</th>
+              <th>Image</th>
+            </tr>
+          </thead>
+          <tbody id="vlm-no-tbody">
+            <tr class="empty-row"><td colspan="6">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

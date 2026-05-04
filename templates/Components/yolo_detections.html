@@ -1,0 +1,45 @@
+<div class="tab-pane fade" id="tab-detections">
+  <div class="filter-row">
+    <div>
+      <label>Defect Type</label>
+      <input type="text" class="form-control" id="f-defect-type" placeholder="e.g. pothole" style="width:150px">
+    </div>
+    <div>
+      <label>Model</label>
+      <input type="text" class="form-control" id="f-model-name" placeholder="e.g. yolov8n" style="width:140px">
+    </div>
+    <div>
+      <label>From</label>
+      <input type="datetime-local" class="form-control" id="f-start" style="width:180px">
+    </div>
+    <div>
+      <label>To</label>
+      <input type="datetime-local" class="form-control" id="f-end" style="width:180px">
+    </div>
+    <div style="padding-top:18px">
+      <button class="btn-filter" onclick="loadAllYoloDetections()">Filter</button>
+    </div>
+  </div>
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="yolo-all">
+      <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; overflow-x:auto; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+        <table class="det-table">
+          <thead>
+            <tr>
+              <th>Track ID</th>
+              <th>Defect Type</th>
+              <th>Confidence</th>
+              <th>Model</th>
+              <th>Timestamp</th>
+              <th>Image</th>
+            </tr>
+          </thead>
+          <tbody id="detections-tbody">
+            <tr class="empty-row"><td colspan="6">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

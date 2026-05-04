@@ -3,169 +3,182 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard — Road Defect</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <title>Dashboard — Road Defect</title>  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    body { background: #0f1117; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
-
-    /* ── Sidebar ── */
-    .sidebar {
-      width: 220px; min-height: 100vh; background: #1a1d27;
-      position: fixed; top: 0; left: 0;
-      border-right: 1px solid #2d3148; z-index: 100;
-      display: flex; flex-direction: column;
-    }
-    .sidebar .logo {
-      padding: 22px 18px 18px; font-size: 15px; font-weight: 700;
-      color: #818cf8; border-bottom: 1px solid #2d3148; line-height: 1.4;
-    }
-    .sidebar .logo span { color: #e2e8f0; }
-    .sidebar nav { padding: 12px 0; flex: 1; }
-    .sidebar nav a {
-      display: flex; align-items: center; gap: 10px;
-      padding: 11px 20px; color: #94a3b8; text-decoration: none;
-      font-size: 13.5px; transition: all .18s;
-    }
-    .sidebar nav a:hover, .sidebar nav a.active {
-      background: #252840; color: #818cf8;
-      border-left: 3px solid #818cf8;
-    }
-    .sidebar .version { padding: 14px 18px; font-size: 11px; color: #475569;
-      border-top: 1px solid #2d3148; }
+    body { background: #f8fafc; color: #1e293b; font-family: 'Inter', sans-serif; }
 
     /* ── Main content ── */
-    .main { margin-left: 220px; padding: 28px 32px; min-height: 100vh; }
-    .page-title { font-size: 22px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
-    .page-sub   { font-size: 13px; color: #64748b; margin-bottom: 26px; }
+    .main {  padding: 32px 40px; min-height: 100vh; }
+    .page-title { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+    .page-sub   { font-size: 14px; color: #64748b; margin-bottom: 28px; }
 
     /* ── Stats cards ── */
     .stat-card {
-      background: #1a1d27; border: 1px solid #2d3148;
-      border-radius: 12px; padding: 20px 22px;
+      background: #ffffff; border: 1px solid #e2e8f0;
+      border-radius: 12px; padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    .stat-card .label { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: .06em; }
-    .stat-card .value { font-size: 30px; font-weight: 700; margin: 4px 0 2px; }
-    .stat-card .sub   { font-size: 12px; color: #64748b; }
-    .stat-card.blue   .value { color: #60a5fa; }
-    .stat-card.red    .value { color: #f87171; }
-    .stat-card.purple .value { color: #a78bfa; }
-    .stat-card.green  .value { color: #34d399; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .stat-card .label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+    .stat-card .value { font-size: 32px; font-weight: 700; margin: 8px 0 4px; color: #0f172a; }
+    .stat-card .sub   { font-size: 12px; color: #94a3b8; }
+    
+    .stat-card.blue   .value { color: #2563eb; }
+    .stat-card.red    .value { color: #ef4444; }
+    .stat-card.purple .value { color: #8b5cf6; }
+    .stat-card.green  .value { color: #10b981; }
 
-    /* ── Live indicator ─��� */
+    /* ── Live indicator ── */
     .live-dot {
       display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-      background: #34d399; margin-right: 6px;
-      animation: pulse 1.4s ease-in-out infinite;
+      background: #10b981; margin-right: 6px;
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
-    .live-dot.offline { background: #475569; animation: none; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .live-dot.offline { background: #94a3b8; animation: none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
     /* ── Tabs ── */
-    .nav-tabs { border-bottom: 1px solid #2d3148; margin-bottom: 20px; }
-    .nav-tabs .nav-link { color: #64748b; border: none; padding: 10px 18px; font-size: 14px; }
-    .nav-tabs .nav-link:hover { color: #818cf8; }
-    .nav-tabs .nav-link.active { color: #818cf8; border-bottom: 2px solid #818cf8; background: none; }
+    .nav-tabs { border-bottom: 1px solid #e2e8f0; margin-bottom: 24px; gap: 8px; }
+    .nav-tabs .nav-link { 
+      color: #64748b; border: none; padding: 12px 20px; font-size: 14px; font-weight: 500;
+      transition: all 0.2s; border-bottom: 2px solid transparent;
+    }
+    .nav-tabs .nav-link:hover { color: #2563eb; }
+    .nav-tabs .nav-link.active { 
+      color: #2563eb; border-bottom: 2px solid #2563eb; background: none; 
+    }
 
-    /* ── Filters ─�� */
-    .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: flex-end; }
+    /* ── Filters ── */
+    .filter-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; align-items: flex-end; }
     .filter-row .form-control,
     .filter-row .form-select {
-      background: #1e2235; border: 1px solid #2d3148; color: #e2e8f0;
-      font-size: 13px; padding: 6px 10px; border-radius: 6px;
+      background: #ffffff; border: 1px solid #e2e8f0; color: #1e293b;
+      font-size: 13px; padding: 8px 12px; border-radius: 8px;
     }
     .filter-row .form-control:focus,
-    .filter-row .form-select:focus { border-color: #818cf8; box-shadow: none; outline: none; }
-    .filter-row label { font-size: 12px; color: #64748b; margin-bottom: 3px; display: block; }
+    .filter-row .form-select:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); outline: none; }
+    .filter-row label { font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 500; }
     .btn-filter {
-      background: #818cf8; color: #fff; border: none;
-      padding: 6px 18px; border-radius: 6px; cursor: pointer; font-size: 13px;
+      background: #2563eb; color: #fff; border: none;
+      padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+      transition: background 0.2s;
     }
-    .btn-filter:hover { background: #6366f1; }
+    .btn-filter:hover { background: #1d4ed8; }
 
     /* ── Table ── */
-    .det-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .det-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
     .det-table th {
-      text-align: left; padding: 10px 14px; background: #1e2235;
-      color: #64748b; font-weight: 600; border-bottom: 1px solid #2d3148;
+      text-align: left; padding: 12px 16px; background: #f8fafc;
+      color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0;
     }
-    .det-table td { padding: 10px 14px; border-bottom: 1px solid #1e2235; vertical-align: middle; }
-    .det-table tr:hover td { background: #1e2235; }
-    .det-table .empty-row td { text-align: center; color: #475569; padding: 40px; }
+    .det-table td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .det-table tr:last-child td { border-bottom: none; }
+    .det-table tr:hover td { background: #f8fafc; }
+    .det-table .empty-row td { text-align: center; color: #94a3b8; padding: 60px; }
 
     .thumb {
-      width: 60px; height: 45px; object-fit: cover;
-      border-radius: 4px; cursor: pointer; border: 1px solid #2d3148;
+      width: 80px; height: 50px; object-fit: cover;
+      border-radius: 6px; cursor: pointer; border: 1px solid #e2e8f0;
+      transition: transform 0.2s, border-color 0.2s;
     }
-    .thumb:hover { border-color: #818cf8; }
+    .thumb:hover { border-color: #2563eb; transform: scale(1.05); }
 
     .badge-type {
-      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      display: inline-block; padding: 4px 10px; border-radius: 6px;
       font-size: 11px; font-weight: 600;
-      background: #1e1b4b; color: #a78bfa;
+      background: #eff6ff; color: #2563eb;
     }
 
     /* ── Live feed cards ── */
-    .live-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 14px; }
+    .live-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
     .live-card {
-      background: #1a1d27; border: 1px solid #2d3148; border-radius: 12px;
-      overflow: hidden; transition: border-color .2s;
+      background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
+      overflow: hidden; transition: all 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
-    .live-card:hover { border-color: #818cf8; }
-    .live-card img { width: 100%; height: 150px; object-fit: cover; display: block; cursor: pointer; }
-    .live-card .card-body { padding: 10px 12px; }
+    .live-card:hover { border-color: #2563eb; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .live-card img { width: 100%; height: 180px; object-fit: cover; display: block; cursor: pointer; }
+    .live-card .card-body { padding: 16px; }
+    
     .live-route {
-      font-size: 11px; font-weight: 700; padding: 2px 8px;
-      border-radius: 20px; display: inline-block; margin-bottom: 6px;
+      font-size: 10px; font-weight: 700; padding: 4px 8px;
+      border-radius: 4px; display: inline-block; margin-bottom: 8px;
+      text-transform: uppercase; letter-spacing: 0.05em;
     }
-    .live-meta { font-size: 12px; color: #64748b; line-height: 1.6; }
-    .live-reason { font-size: 11.5px; color: #f87171; margin-top: 4px; font-style: italic; }
+    .live-meta { font-size: 13px; color: #475569; line-height: 1.5; }
+    .live-reason { 
+      font-size: 12px; color: #92400e; margin-top: 10px; padding: 8px; 
+      background: #fffbeb; border-radius: 6px; border-left: 3px solid #f59e0b;
+    }
 
     .live-counters {
-      display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 18px;
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px;
     }
     .live-counter {
-      background: #1e2235; border: 1px solid #2d3148; border-radius: 8px;
-      padding: 8px 16px; font-size: 13px; color: #94a3b8;
+      background: #ffffff; border: 1px solid #e2e8f0; border-radius: 100px;
+      padding: 6px 16px; font-size: 13px; color: #64748b; font-weight: 500;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
-    .live-counter .cnt-val { font-weight: 700; margin-left: 4px; }
-    .cnt-accepted { color: #34d399; }
-    .cnt-rejected { color: #f87171; }
-    .cnt-vlm      { color: #a78bfa; }
-    .cnt-cached   { color: #60a5fa; }
+    .live-counter .cnt-val { font-weight: 700; margin-left: 6px; }
+    .cnt-accepted { color: #059669; }
+    .cnt-rejected { color: #dc2626; }
+    .cnt-vlm      { color: #7c3aed; }
+    .cnt-cached   { color: #2563eb; }
 
     /* ── Modal ── */
-    .modal-content { background: #1a1d27; border: 1px solid #2d3148; color: #e2e8f0; }
-    .modal-header  { border-bottom: 1px solid #2d3148; }
-    .modal-footer  { border-top: 1px solid #2d3148; }
-    .btn-close     { filter: invert(1); }
-    #modal-preview { max-width: 100%; max-height: 65vh; display: block; margin: 0 auto; }
-    #modal-caption { font-size: 13px; color: #94a3b8; margin-top: 10px; text-align: center; }
+    .modal-content { background: #ffffff; border: none; border-radius: 16px; overflow: hidden; }
+    .modal-header  { border-bottom: 1px solid #f1f5f9; padding: 16px 24px; }
+    .modal-footer  { border-top: 1px solid #f1f5f9; }
+    #modal-preview { max-width: 100%; max-height: 70vh; display: block; margin: 0 auto; border-radius: 8px; }
+    #modal-caption { font-size: 14px; color: #64748b; margin-top: 16px; text-align: center; }
 
-    /* ── Reasoning text ── */
     .reasoning-text {
-      font-size: 12px; color: #94a3b8; font-style: italic;
-      max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: 12px; color: #64748b;
+      max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+
+    /* Reasoning in Modal */
+    .reasoning-col {
+      border-left: 1px solid #f1f5f9;
+      padding-left: 24px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+    }
+    .reasoning-header {
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+    .reasoning-body {
+      font-size: 14px;
+      color: #1e293b;
+      line-height: 1.6;
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 12px;
+      max-height: 50vh;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+    }
+    #modal-reasoning-col { display: none; }
   </style>
 </head>
 <body>
 
-<!-- ── Sidebar ── -->
-<div class="sidebar">
-  <div class="logo">🛣️ Road Defect<br><span>Dashboard</span></div>
-  <nav>
-    <a href="/dashboard" class="active">🗃��� Dashboard</a>
-  </nav>
-  <div class="version">YOLO + VLM + ngrok</div>
-</div>
-
 <!-- ── Main ── -->
 <div class="main">
-  <div class="d-flex align-items-center gap-3 mb-1">
-    <div class="page-title" style="margin-bottom:0">Database Dashboard</div>
-    <span id="live-indicator" style="font-size:12px;color:#64748b">
-      <span class="live-dot offline"></span> <span id="live-label">connecting...</span>
-    </span>
+  <div class="d-flex align-items-center gap-2 mb-1">
+    <h1 class="page-title" style="margin:0">Road Monitoring Dashboard</h1>
+    <div id="live-indicator" class="d-flex align-items-center gap-1 ms-2" style="font-size:13px; color:#10b981; font-weight:600;">
+      <span class="live-dot offline"></span>
+      <span id="live-label">connecting...</span>
+    </div>
   </div>
   <div class="page-sub">YOLO detections, VLM rejections, and live pipeline stream</div>
 
@@ -175,7 +188,14 @@
       <div class="stat-card blue">
         <div class="label">YOLO Detections</div>
         <div class="value" id="stat-detections">—</div>
-        <div class="sub">stored in database</div>
+        <div class="sub">initial predictions</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stat-card green">
+        <div class="label">VLM Accepted</div>
+        <div class="value" id="stat-vlm-yes">—</div>
+        <div class="sub">confirmed defects</div>
       </div>
     </div>
     <div class="col-md-3">
@@ -186,17 +206,10 @@
       </div>
     </div>
     <div class="col-md-3">
-      <div class="stat-card purple">
-        <div class="label">Models Used</div>
-        <div class="value" id="stat-models">���</div>
-        <div class="sub" id="stat-models-list" style="word-break:break-all"></div>
-      </div>
-    </div>
-    <div class="col-md-3">
       <div class="stat-card green">
         <div class="label">Live Received</div>
         <div class="value" id="stat-live-total">0</div>
-        <div class="sub" id="stat-live-sub">via pipeline stream</div>
+        <div class="sub" id="stat-live-sub">pipeline stream</div>
       </div>
     </div>
   </div>
@@ -204,144 +217,55 @@
   <!-- Tabs -->
   <ul class="nav nav-tabs" id="mainTabs">
     <li class="nav-item">
-      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-detections">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-live">
+       📡 Live Feed
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-detections">
         YOLO Detections
       </button>
     </li>
     <li class="nav-item">
       <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vlm-no">
-        VLM Rejections
+        VLM Detections
       </button>
     </li>
-    <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-live">
-        📡 Live Feed
-      </button>
-    </li>
+
   </ul>
 
   <div class="tab-content">
 
-    <!-- ── YOLO Detections tab ── -->
-    <div class="tab-pane fade show active" id="tab-detections">
-      <div class="filter-row">
-        <div>
-          <label>Defect Type</label>
-          <input type="text" class="form-control" id="f-defect-type" placeholder="e.g. pothole" style="width:150px">
-        </div>
-        <div>
-          <label>Model</label>
-          <input type="text" class="form-control" id="f-model-name" placeholder="e.g. yolov8n" style="width:140px">
-        </div>
-        <div>
-          <label>From</label>
-          <input type="datetime-local" class="form-control" id="f-start" style="width:180px">
-        </div>
-        <div>
-          <label>To</label>
-          <input type="datetime-local" class="form-control" id="f-end" style="width:180px">
-        </div>
-        <div style="padding-top:18px">
-          <button class="btn-filter" onclick="loadDetections()">Filter</button>
-        </div>
-      </div>
-
-      <div style="background:#1a1d27;border:1px solid #2d3148;border-radius:10px;overflow-x:auto">
-        <table class="det-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Defect Type</th>
-              <th>Confidence</th>
-              <th>Model</th>
-              <th>Timestamp</th>
-              <th>Image</th>
-            </tr>
-          </thead>
-          <tbody id="detections-tbody">
-            <tr class="empty-row"><td colspan="6">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ��─ VLM Rejections tab ─�� -->
-    <div class="tab-pane fade" id="tab-vlm-no">
-      <div class="filter-row">
-        <div>
-          <label>Defect Type</label>
-          <input type="text" class="form-control" id="f-vlm-defect" placeholder="e.g. pothole" style="width:150px">
-        </div>
-        <div>
-          <label>Model</label>
-          <input type="text" class="form-control" id="f-vlm-model" placeholder="e.g. gemini" style="width:160px">
-        </div>
-        <div>
-          <label>From</label>
-          <input type="datetime-local" class="form-control" id="f-vlm-start" style="width:180px">
-        </div>
-        <div>
-          <label>To</label>
-          <input type="datetime-local" class="form-control" id="f-vlm-end" style="width:180px">
-        </div>
-        <div style="padding-top:18px">
-          <button class="btn-filter" onclick="loadVlmNo()">Filter</button>
-        </div>
-      </div>
-
-      <div style="background:#1a1d27;border:1px solid #2d3148;border-radius:10px;overflow-x:auto">
-        <table class="det-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Defect Type</th>
-              <th>Model</th>
-              <th>Reasoning</th>
-              <th>Timestamp</th>
-              <th>Image</th>
-            </tr>
-          </thead>
-          <tbody id="vlm-no-tbody">
-            <tr class="empty-row"><td colspan="6">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ─�� Live Feed tab ── -->
-    <div class="tab-pane fade" id="tab-live">
-      <div class="d-flex align-items-center gap-3 mb-3">
-        <span style="font-size:13px;color:#64748b" id="live-status">Waiting for data...</span>
-        <span style="margin-left:auto;color:#475569;font-size:12px" id="last-update"></span>
-      </div>
-
-      <div class="live-counters">
-        <div class="live-counter">Accepted <span class="cnt-val cnt-accepted" id="cnt-accepted">0</span></div>
-        <div class="live-counter">Rejected <span class="cnt-val cnt-rejected" id="cnt-rejected">0</span></div>
-        <div class="live-counter">VLM Calls <span class="cnt-val cnt-vlm" id="cnt-vlm">0</span></div>
-        <div class="live-counter">Cached <span class="cnt-val cnt-cached" id="cnt-cached">0</span></div>
-      </div>
-
-      <div class="live-grid" id="live-grid"></div>
-      <div id="live-empty" style="color:#475569;font-size:14px;text-align:center;padding:40px">
-        Waiting for detections from Colab pipeline...
-      </div>
-    </div>
+    {% include 'components/live_feed.html' %}
+    {% include 'components/yolo_detections.html' %}
+    {% include 'components/vlm_detections.html' %}
 
   </div><!-- /tab-content -->
 </div><!-- /main -->
 
 <!-- ── Image preview modal ── -->
 <div class="modal fade" id="imgModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h6 class="modal-title" id="modal-title">Image Preview</h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body text-center">
-        <img id="modal-preview" src="" alt="preview" />
-        <p id="modal-caption"></p>
+      <div class="modal-body">
+        <div class="row g-4">
+          <div class="col-md" id="modal-img-col">
+            <div class="text-center">
+              <img id="modal-preview" src="" alt="preview" style="max-height: 70vh; width: auto; max-width: 100%; border-radius: 8px;" />
+              <p id="modal-caption" class="mt-3 mb-0" style="font-size: 14px; color: #64748b;"></p>
+            </div>
+          </div>
+          <div class="col-md-4" id="modal-reasoning-col">
+            <div class="reasoning-col">
+              <div class="reasoning-header">VLM Reasoning</div>
+              <div class="reasoning-body" id="modal-reasoning-text"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

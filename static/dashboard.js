@@ -10,6 +10,7 @@ async function fetchStats() {
     const data = await res.json();
 
     document.getElementById("stat-detections").textContent = data.total_detections ?? "—";
+    document.getElementById("stat-vlm-yes").textContent    = data.vlm_yes_count ?? "—";
     document.getElementById("stat-vlm-no").textContent     = data.vlm_no_count ?? "—";
 
     const models = data.models || [];
@@ -29,10 +30,21 @@ function openImageB64(b64, caption) {
   imgModal.show();
 }
 
-function openImageUrl(url, caption) {
+function openImageUrl(url, caption, reasoning) {
   document.getElementById("modal-preview").src = url;
   document.getElementById("modal-caption").textContent = caption || "";
   document.getElementById("modal-title").textContent   = "Image Preview";
+
+  const reasonCol  = document.getElementById("modal-reasoning-col");
+  const reasonText = document.getElementById("modal-reasoning-text");
+  
+  if (reasoning && reasoning.trim()) {
+    reasonText.textContent = reasoning;
+    reasonCol.style.display = "block";
+  } else {
+    reasonCol.style.display = "none";
+  }
+
   imgModal.show();
 }
 
@@ -40,9 +52,14 @@ function openImageUrl(url, caption) {
 
 async function loadDetections() {
   const tbody = document.getElementById("detections-tbody");
+  if (!tbody) return;
+  
   tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Loading...</td></tr>';
 
   const params = new URLSearchParams();
+  // Status is now always 'accepted' for the main detections table (> 0.80)
+  params.set("status", "accepted");
+  
   const defectType = document.getElementById("f-defect-type").value.trim();
   const start      = document.getElementById("f-start").value;
   const end        = document.getElementById("f-end").value;
@@ -56,23 +73,27 @@ async function loadDetections() {
     const rows = await res.json();
 
     if (!rows.length) {
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No detections found.</td></tr>';
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="6">No high-confidence detections found.</td></tr>`;
       return;
     }
 
     tbody.innerHTML = rows.map(r => {
-      const imgSrc  = r.image ? `data:image/jpeg;base64,${r.image}` : null;
+      let imgSrc = null;
+      if (r.image) {
+        imgSrc = r.image.includes("/") ? `/static/${r.image}` : `data:image/jpeg;base64,${r.image}`;
+      }
+
       const imgCell = imgSrc
         ? `<img class="thumb" src="${imgSrc}" alt="img"
-              onclick="openImageB64('${r.image}', '${r.defect_type} | ${r.model_name || ""} | conf ${r.confidence}')">`
+              onclick="openImageUrl('${imgSrc}', '${r.defect_type} | ${r.model_name || ""} | conf ${r.confidence}')">`
         : '<span style="color:#475569;font-size:12px">no image</span>';
 
       const conf = r.confidence != null
-        ? `<span style="color:${r.confidence >= 0.7 ? '#34d399' : r.confidence >= 0.4 ? '#fb923c' : '#f87171'};font-weight:600">${r.confidence.toFixed(3)}</span>`
+        ? `<span style="color:#059669;font-weight:600">${r.confidence.toFixed(3)}</span>`
         : "—";
 
       return `<tr>
-        <td style="color:#475569">${r.id}</td>
+        <td style="color:#475569">${r.track_id ?? r.id}</td>
         <td><span class="badge-type">${r.defect_type || "—"}</span></td>
         <td>${conf}</td>
         <td style="color:#94a3b8">${r.model_name || "—"}</td>
@@ -87,15 +108,69 @@ async function loadDetections() {
   }
 }
 
+function loadAllYoloDetections() {
+  loadDetections();
+}
+
 // ── VLM Rejections ────────────────────────────────────────────
 
-async function loadVlmNo() {
-  const tbody = document.getElementById("vlm-no-tbody");
+async function loadVlmYes() {
+  const tbody = document.getElementById("vlm-yes-tbody");
+  if (!tbody) return;
   tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Loading...</td></tr>';
 
   const params = new URLSearchParams();
-  const defectType = document.getElementById("f-vlm-defect").value.trim();
-  const model      = document.getElementById("f-vlm-model").value.trim();
+  const defectType = document.getElementById("f-vlm-defect-type").value.trim();
+  const model      = document.getElementById("f-vlm-model-name").value.trim();
+  const start      = document.getElementById("f-vlm-start").value;
+  const end        = document.getElementById("f-vlm-end").value;
+
+  if (defectType) params.set("defect_type", defectType);
+  if (model)      params.set("model", model);
+  if (start)      params.set("start", start.replace("T", " "));
+  if (end)        params.set("end",   end.replace("T", " "));
+
+  try {
+    const res  = await fetch("/api/vlm-yes?" + params);
+    const rows = await res.json();
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No confirmed detections.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => {
+      let imgSrc = r.image ? (r.image.includes("/") ? `/static/${r.image}` : `data:image/jpeg;base64,${r.image}`) : null;
+      const imgCell = imgSrc
+        ? `<img class="thumb" src="${imgSrc}" alt="img" onclick="openImageUrl('${imgSrc}', 'VLM Confirmed | ${(r.model || "").replace(/"/g, "&quot;")}', '${(r.reasoning || "").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "\\n").replace(/\r/g, "")}')">`
+        : '<span style="color:#475569;font-size:12px">no image</span>';
+
+      const reasoning = r.reasoning
+        ? `<div class="reasoning-text" title="${r.reasoning}">${r.reasoning}</div>`
+        : '<span style="color:#475569">—</span>';
+
+      return `<tr>
+        <td style="color:#475569">${r.track_id ?? r.id}</td>
+        <td><span class="badge-type">${r.defect_type || "—"}</span></td>
+        <td style="color:#94a3b8">${r.model || "—"}</td>
+        <td style="color:#64748b;font-size:12px">${r.timestamp || "—"}</td>
+        <td>${imgCell}</td>
+      </tr>`;
+    }).join("");
+  } catch (e) {
+    console.error("loadVlmYes failed:", e);
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Error loading data.</td></tr>';
+  }
+}
+
+async function loadVlmNo() {
+  const tbody = document.getElementById("vlm-no-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Loading...</td></tr>';
+
+  const params = new URLSearchParams();
+  const defectType = document.getElementById("f-vlm-defect-type").value.trim();
+  const model      = document.getElementById("f-vlm-model-name").value.trim();
   const start      = document.getElementById("f-vlm-start").value;
   const end        = document.getElementById("f-vlm-end").value;
 
@@ -114,10 +189,14 @@ async function loadVlmNo() {
     }
 
     tbody.innerHTML = rows.map(r => {
-      const imgSrc  = r.image ? `data:image/jpeg;base64,${r.image}` : null;
+      let imgSrc = null;
+      if (r.image) {
+        imgSrc = r.image.includes("/") ? `/static/${r.image}` : `data:image/jpeg;base64,${r.image}`;
+      }
+
       const imgCell = imgSrc
         ? `<img class="thumb" src="${imgSrc}" alt="img"
-              onclick="openImageB64('${r.image}', 'VLM Rejection | ${r.model || ""}')">`
+              onclick="openImageUrl('${imgSrc}', 'VLM Rejection | ${(r.model || "").replace(/"/g, "&quot;")}', '${(r.reasoning || "").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "\\n").replace(/\r/g, "")}')">`
         : '<span style="color:#475569;font-size:12px">no image</span>';
 
       const reasoning = r.reasoning
@@ -125,7 +204,7 @@ async function loadVlmNo() {
         : '<span style="color:#475569">—</span>';
 
       return `<tr>
-        <td style="color:#475569">${r.id}</td>
+        <td style="color:#475569">${r.track_id ?? r.id}</td>
         <td><span class="badge-type">${r.defect_type || "—"}</span></td>
         <td style="color:#94a3b8">${r.model || "—"}</td>
         <td>${reasoning}</td>
@@ -140,26 +219,35 @@ async function loadVlmNo() {
   }
 }
 
+function loadAllVlmDetections() {
+  const activeTab = document.querySelector('#vlmSubTabs .nav-link.active');
+  if (activeTab && activeTab.textContent.trim().toLowerCase().includes('rejected')) {
+    loadVlmNo();
+  } else {
+    loadVlmYes();
+  }
+}
+
 // ── Live Feed ─────────────────────────────────────────────────
 
 const LIVE_POLL_MS = 2500;
 const LIVE_SHOW_MAX = 80;
 
 const ROUTE_COLORS = {
-  "AUTO-ACCEPT"    : "#34d399",
-  "VLM-YES"        : "#4ade80",
-  "CACHED-ACCEPT"  : "#60a5fa",
-  "LOW-CONF REJECT": "#94a3b8",
-  "VLM-NO"         : "#f87171",
-  "CACHED-REJECT"  : "#c084fc",
+  "AUTO-ACCEPT"    : "#059669",
+  "VLM-YES"        : "#0d9488",
+  "CACHED-ACCEPT"  : "#2563eb",
+  "LOW-CONF REJECT": "#64748b",
+  "VLM-NO"         : "#dc2626",
+  "CACHED-REJECT"  : "#7c3aed",
 };
 
 let seenLiveKeys = new Set();
 let liveStarted = false;
 
 function routeStyle(route) {
-  const col = ROUTE_COLORS[route] || "#e2e8f0";
-  return `background:${col}22;color:${col};border:1px solid ${col}44;`;
+  const col = ROUTE_COLORS[route] || "#64748b";
+  return `background:${col}15; color:${col}; border:1px solid ${col}30;`;
 }
 
 function timeAgo(ts) {
@@ -170,7 +258,7 @@ function timeAgo(ts) {
 }
 
 function makeLiveCard(item) {
-  const col = ROUTE_COLORS[item.route] || "#e2e8f0";
+  const col = ROUTE_COLORS[item.route] || "#64748b";
   const key = item.frame_name + "_" + item.track_id + "_" + item.route;
   if (seenLiveKeys.has(key)) return null;
   seenLiveKeys.add(key);
@@ -179,21 +267,25 @@ function makeLiveCard(item) {
   card.className = "live-card";
 
   const imgSrc = `/api/frame/${encodeURIComponent(item.frame_name)}/${item.track_id}/${item.route}`;
-  const reason = item.reason
-    ? `<div class="live-reason">VLM: ${item.reason.substring(0, 80)}${item.reason.length > 80 ? "…" : ""}</div>`
+  const isRejected = item.route === "VLM-NO" || item.route === "LOW-CONF REJECT" || item.route === "CACHED-REJECT";
+  const reason = (item.reason && isRejected)
+    ? `<div class="live-reason">VLM: ${item.reason.substring(0, 120)}${item.reason.length > 120 ? "…" : ""}</div>`
     : "";
 
   card.innerHTML = `
     <img src="${imgSrc}" alt="${item.frame_name}" loading="lazy"
          onerror="this.style.display='none'"
-         onclick="openImageUrl('${imgSrc}', '${(item.label || "").replace(/'/g, "\\'")} ${item.confidence} | ${item.route} | Track#${item.track_id}')">
+         onclick="openImageUrl('${imgSrc}', '${(item.label || "").replace(/'/g, "\\'").replace(/"/g, "&quot;")} ${item.confidence} | ${item.route} | Track#${item.track_id}', '${(item.reason || "").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "\\n").replace(/\r/g, "")}')">
     <div class="card-body">
       <span class="live-route" style="${routeStyle(item.route)}">${item.route}</span>
       <div class="live-meta">
-        <b style="color:${col}">${item.label || "—"}</b>
-        &nbsp;conf <b>${item.confidence || "—"}</b>
-        &nbsp;&bull;&nbsp; Track#<b>${item.track_id ?? "—"}</b><br>
-        <span style="color:#475569">${item.frame_name || ""} &bull; ${timeAgo(item.ts || item.received_at)}</span>
+        <div class="mb-1 d-flex align-items-center flex-wrap gap-2">
+          <b style="color:#0f172a; font-size:14px;">${item.label || "—"}</b>
+          <span style="color:${col}; font-weight:600; font-size:12px;">conf ${item.confidence || "—"}</span>
+        </div>
+        <div style="color:#64748b; font-size:12px; font-weight:500;">
+          Track#${item.track_id ?? "—"} &bull; ${item.frame_name || ""} &bull; ${timeAgo(item.ts || item.received_at)}
+        </div>
       </div>
       ${reason}
     </div>`;
@@ -219,7 +311,7 @@ async function pollLive() {
     if (data.counters.total > 0) {
       dot.classList.remove("offline");
       label.textContent = data.counters.total + " received";
-      label.style.color = "#34d399";
+      label.style.color = "#059669";
     } else {
       label.textContent = "no data yet";
     }
@@ -259,9 +351,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Load VLM tab data when tab is first clicked
   document.querySelector('[data-bs-target="#tab-vlm-no"]').addEventListener("shown.bs.tab", () => {
-    if (document.getElementById("vlm-no-tbody").querySelector(".empty-row")) {
-      loadVlmNo();
-    }
+    loadVlmNo();
+    loadVlmYes();
   });
 
   // Auto-refresh DB stats every 10 seconds
